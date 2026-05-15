@@ -1,0 +1,62 @@
+# ============================================================
+# crypto-stat-arb  |  Central Experiment Configuration
+# ============================================================
+
+data:
+  exchange: binance
+  timeframes:
+    daily: "1d"
+    hourly: "1h"
+  start_date: "2020-01-01"
+  end_date: null          # null = today
+  base_dir: data
+
+universe:
+  min_dollar_volume: 10_000_000   # $10M minimum ADTV
+  min_history_days: 365           # 1 year minimum
+  exclude_stablecoins: true
+  exclude_wrapped: false
+
+signals:
+  momentum:
+    lookback_days: [21, 63, 126, 252]
+    skip_days: 5
+  reversal:
+    lookback_days: [1, 5, 10]
+  pairs:
+    cointegration_lookback: 252
+    zscore_window: 21
+    entry_threshold: 1.5
+    exit_threshold: 0.5
+  activity:
+    volume_window: 21
+    high_volume_threshold: 1.5
+
+backtest:
+  rebalance_freq: daily           # daily | weekly | monthly
+  position_method: rank           # rank | signal | top_bottom | equal_weight | vol_target
+  max_position: 0.10              # max weight per asset
+  top_k: 10                       # for top_bottom method
+  vol_target: 0.15                # 15% annual vol target
+  vol_window: 63
+  signal_lag: 1                   # periods to lag signal (lookahead prevention)
+  return_type: log
+
+execution:
+  order_type: market              # market | limit
+  # market: 20 bps round-trip, limit: 7 bps round-trip
+  market_impact_bps_per_pct_adv: 5.0
+  slippage_vol_multiplier: 0.1
+
+evaluation:
+  periods_per_year: 252
+  benchmark: "BTC/USDT"
+  risk_free_rate: 0.0
+
+combination:
+  method: equal                   # equal | ic_weighted | sharpe_weighted | min_corr | mean_variance
+  estimation_window: 63
+
+output:
+  plots_dir: output/plots
+  reports_dir: output/reports
