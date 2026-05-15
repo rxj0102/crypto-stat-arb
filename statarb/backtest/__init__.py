@@ -1,6 +1,18 @@
-from .engine import BacktestEngine
-from .execution import ExecutionModel
+from .engine import BacktestConfig, BacktestData, BacktestEngine, BacktestResult, UnconstrainedBacktest
+from .execution import ExecutionConfig, ExecutionModel, ExecutionOptimizer
 from .positions import PositionManager
-from .weighting import StrategyWeighter
+from .weighting import StrategyWeighter, StrategyWeighting
 
-__all__ = ["BacktestEngine", "ExecutionModel", "PositionManager", "StrategyWeighter"]
+__all__ = [
+    "UnconstrainedBacktest",
+    "BacktestResult",
+    "BacktestConfig",
+    "BacktestData",
+    "BacktestEngine",
+    "ExecutionModel",
+    "ExecutionOptimizer",
+    "ExecutionConfig",
+    "PositionManager",
+    "StrategyWeighting",
+    "StrategyWeighter",
+]
