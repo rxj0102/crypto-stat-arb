@@ -16,6 +16,9 @@ from statarb.utils import get_logger
 
 logger = get_logger(__name__)
 
+_pm = PerformanceMetrics()
+_ra = RiskAnalytics()
+
 
 class PerformanceReporter:
     """
@@ -32,7 +35,7 @@ class PerformanceReporter:
         self,
         strategy_returns: Dict[str, pd.Series],
         benchmark_returns: Optional[pd.Series] = None,
-        periods_per_year: int = 252,
+        periods_per_year: int = 365,
     ):
         """
         Args:
@@ -57,9 +60,8 @@ class PerformanceReporter:
         """
         tables = {}
         for name, rets in self.strategy_returns.items():
-            pm = PerformanceMetrics(rets, self.periods_per_year)
-            metrics = pm.summary(self.benchmark_returns)
-            tables[name] = metrics
+            report = _pm.full_report(rets, self.benchmark_returns)
+            tables[name] = report["value"]
         return pd.DataFrame(tables)
 
     def alpha_beta_table(self) -> pd.DataFrame:
@@ -67,38 +69,36 @@ class PerformanceReporter:
         Alpha / beta decomposition for each strategy vs the benchmark.
 
         Returns:
-            DataFrame with alpha, beta, r_squared, p_value columns.
+            DataFrame with alpha_ann, beta, r_squared columns.
         """
         if self.benchmark_returns is None:
             raise ValueError("benchmark_returns required for alpha/beta decomposition")
 
         rows = {}
         for name, rets in self.strategy_returns.items():
-            ra = RiskAnalytics(rets, self.periods_per_year)
-            alpha, beta, r2, pval = ra.alpha_beta(self.benchmark_returns)
+            ab = _ra.alpha_beta(rets, self.benchmark_returns)
             rows[name] = {
-                "alpha_ann": alpha,
-                "beta": beta,
-                "r_squared": r2,
-                "p_value_alpha": pval,
+                "alpha_ann":   ab["alpha"],
+                "beta":        ab["beta"],
+                "r_squared":   ab["r_squared"],
+                "alpha_tstat": ab["alpha_tstat"],
+                "beta_tstat":  ab["beta_tstat"],
             }
         return pd.DataFrame(rows).T
 
     def drawdown_table(self) -> pd.DataFrame:
         """
-        Drawdown summary table: max drawdown, duration, and average.
+        Drawdown summary table: max drawdown, duration, calmar.
 
         Returns:
             DataFrame indexed by strategy name.
         """
         rows = {}
         for name, rets in self.strategy_returns.items():
-            pm = PerformanceMetrics(rets, self.periods_per_year)
             rows[name] = {
-                "max_drawdown": pm.max_drawdown(),
-                "max_drawdown_duration_days": pm.max_drawdown_duration(),
-                "average_drawdown": pm.average_drawdown(),
-                "calmar_ratio": pm.calmar_ratio(),
+                "max_drawdown":              _pm.max_drawdown(rets),
+                "max_drawdown_duration_days": _pm.max_drawdown_duration(rets),
+                "calmar_ratio":              _pm.calmar_ratio(rets, self.periods_per_year),
             }
         return pd.DataFrame(rows).T
 
@@ -119,20 +119,25 @@ class PerformanceReporter:
 
         metrics = self.metrics_table()
         print("\n[ CORE METRICS ]")
-        fmt_metrics = metrics.copy()
+        fmt_metrics = metrics.copy().astype(object)
         pct_rows = [
-            "total_return", "annualised_return", "annualised_volatility",
-            "max_drawdown", "average_drawdown", "hit_rate", "var_95", "cvar_95",
+            "annualized_return", "annualized_volatility",
+            "max_drawdown", "win_rate", "tracking_error",
         ]
         for row in pct_rows:
             if row in fmt_metrics.index:
-                fmt_metrics.loc[row] = (fmt_metrics.loc[row] * 100).round(2).astype(str) + "%"
+                fmt_metrics.loc[row] = (
+                    fmt_metrics.loc[row].astype(float) * 100
+                ).round(2).astype(str) + "%"
 
-        float_rows = ["sharpe_ratio", "sortino_ratio", "calmar_ratio",
-                      "skewness", "kurtosis", "profit_factor"]
+        float_rows = [
+            "sharpe_ratio", "sortino_ratio", "calmar_ratio",
+            "skewness", "kurtosis", "profit_factor", "tail_ratio",
+            "alpha", "beta", "information_ratio",
+        ]
         for row in float_rows:
             if row in fmt_metrics.index:
-                fmt_metrics.loc[row] = fmt_metrics.loc[row].round(3)
+                fmt_metrics.loc[row] = fmt_metrics.loc[row].astype(float).round(3)
 
         print(fmt_metrics.to_string())
 
@@ -164,19 +169,22 @@ class PerformanceReporter:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def one_liner(returns: pd.Series, name: str = "strategy",
-                  periods_per_year: int = 252) -> str:
+    def one_liner(
+        returns: pd.Series,
+        name: str = "strategy",
+        periods_per_year: int = 365,
+    ) -> str:
         """
         One-line summary string for quick inspection.
 
         Returns:
-            e.g. "momentum | Sharpe 1.23 | Ann.Ret 24.5% | MDD -18.3% | Turnover N/A"
+            e.g. "momentum | Sharpe 1.23 | Ann.Ret 24.5% | MDD -18.3%"
         """
-        pm = PerformanceMetrics(returns.dropna(), periods_per_year)
+        pm = PerformanceMetrics()
         return (
             f"{name:20s} | "
-            f"Sharpe {pm.sharpe_ratio():5.2f} | "
-            f"Ann.Ret {pm.annualised_return()*100:6.1f}% | "
-            f"Vol {pm.annualised_volatility()*100:5.1f}% | "
-            f"MDD {pm.max_drawdown()*100:6.1f}%"
+            f"Sharpe {pm.sharpe_ratio(returns, periods_per_year=periods_per_year):5.2f} | "
+            f"Ann.Ret {pm.annualized_return(returns, periods_per_year)*100:6.1f}% | "
+            f"Vol {pm.annualized_volatility(returns, periods_per_year)*100:5.1f}% | "
+            f"MDD {pm.max_drawdown(returns)*100:6.1f}%"
         )

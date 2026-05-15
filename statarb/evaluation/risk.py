@@ -2,7 +2,7 @@
 Risk analytics: alpha/beta decomposition, factor exposure, drawdown analysis.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -15,24 +15,16 @@ logger = get_logger(__name__)
 
 class RiskAnalytics:
     """
-    Risk decomposition and factor analysis for strategy returns.
+    Risk analytics: alpha, beta, factor exposure.
 
-    Methods:
-    - Alpha / beta vs a single benchmark (BTC or equal-weighted market)
-    - Multi-factor regression (CAPM-style, Fama-French inspired)
-    - Rolling alpha / beta estimation
-    - Tail risk analysis
-    - Correlation regime analysis
+    Stateless API: every method takes strategy_returns (and other inputs)
+    as explicit arguments so one instance can be reused across strategies.
+
+    Example::
+
+        ra = RiskAnalytics()
+        result = ra.alpha_beta(strategy_returns, benchmark_returns)
     """
-
-    def __init__(self, strategy_returns: pd.Series, periods_per_year: int = 252):
-        """
-        Args:
-            strategy_returns: daily strategy return series
-            periods_per_year: annualisation factor
-        """
-        self.returns = strategy_returns.dropna()
-        self.periods_per_year = periods_per_year
 
     # ------------------------------------------------------------------
     # Alpha / Beta
@@ -40,65 +32,78 @@ class RiskAnalytics:
 
     def alpha_beta(
         self,
+        strategy_returns: pd.Series,
         benchmark_returns: pd.Series,
-        annualise: bool = True,
-    ) -> Tuple[float, float, float, float]:
+    ) -> dict:
         """
-        OLS regression of strategy returns on benchmark returns.
+        CAPM regression:
+            r_strategy = α + β × r_benchmark + ε
+
+        For crypto stat arb the benchmark is typically BTC or an
+        equal-weighted crypto index.
 
         Returns:
-            (alpha, beta, r_squared, p_value_alpha)
-            alpha is annualised if annualise=True.
+            dict with:
+            - 'alpha'       : annualised daily intercept (× 365)
+            - 'beta'        : slope coefficient
+            - 'r_squared'   : R² of the regression
+            - 'alpha_tstat' : t-statistic for alpha
+            - 'beta_tstat'  : t-statistic for beta
         """
-        bench = benchmark_returns.reindex(self.returns.index).dropna()
-        strat = self.returns.reindex(bench.index).dropna()
-        common = strat.index.intersection(bench.index)
-        y = strat.loc[common].values
-        x = bench.loc[common].values
+        clean_s = strategy_returns.dropna()
+        bench = benchmark_returns.reindex(clean_s.index).dropna()
+        y = clean_s.reindex(bench.index).dropna().values
+        x = bench.reindex(clean_s.reindex(bench.index).dropna().index).values
 
         if len(y) < 10:
-            return (0.0, 0.0, 0.0, 1.0)
+            return {
+                "alpha": 0.0, "beta": 0.0, "r_squared": 0.0,
+                "alpha_tstat": 0.0, "beta_tstat": 0.0,
+            }
 
-        slope, intercept, r_value, p_value, _ = stats.linregress(x, y)
-        alpha = intercept
-        if annualise:
-            alpha = alpha * self.periods_per_year
-        return float(alpha), float(slope), float(r_value ** 2), float(p_value)
+        slope, intercept, r_value, _, _ = stats.linregress(x, y)
 
-    def rolling_alpha_beta(
+        # Manual SE computation for t-stats
+        n = len(y)
+        resid = y - (slope * x + intercept)
+        s2 = float((resid ** 2).sum() / (n - 2))
+        x_demean_sq = float(((x - x.mean()) ** 2).sum())
+        if x_demean_sq > 0 and s2 > 0:
+            se_slope = float(np.sqrt(s2 / x_demean_sq))
+            se_intercept = float(np.sqrt(s2 * (1.0 / n + x.mean() ** 2 / x_demean_sq)))
+        else:
+            se_slope = se_intercept = 1.0
+
+        return {
+            "alpha":       float(intercept * 365),
+            "beta":        float(slope),
+            "r_squared":   float(r_value ** 2),
+            "alpha_tstat": float(intercept / se_intercept) if se_intercept > 0 else 0.0,
+            "beta_tstat":  float(slope / se_slope) if se_slope > 0 else 0.0,
+        }
+
+    def rolling_beta(
         self,
+        strategy_returns: pd.Series,
         benchmark_returns: pd.Series,
         window: int = 63,
-    ) -> pd.DataFrame:
+    ) -> pd.Series:
         """
-        Rolling alpha and beta over a sliding window.
-
-        Args:
-            benchmark_returns: benchmark return series
-            window: rolling window in periods
-
-        Returns:
-            DataFrame with columns ['alpha', 'beta', 'r_squared'].
+        Rolling beta over time.
+        Should be near 0 for a dollar-neutral stat-arb strategy.
         """
-        bench = benchmark_returns.reindex(self.returns.index).fillna(0)
-        result = pd.DataFrame(
-            np.nan,
-            index=self.returns.index,
-            columns=["alpha", "beta", "r_squared"],
-        )
+        clean_s = strategy_returns.dropna()
+        bench = benchmark_returns.reindex(clean_s.index).fillna(0)
+        result = pd.Series(np.nan, index=clean_s.index)
 
-        for i in range(window, len(self.returns) + 1):
-            y = self.returns.iloc[i - window: i].values
+        for i in range(window, len(clean_s) + 1):
+            y = clean_s.iloc[i - window: i].values
             x = bench.iloc[i - window: i].values
             mask = ~(np.isnan(x) | np.isnan(y))
             if mask.sum() < window // 2:
                 continue
-            slope, intercept, r_value, _, _ = stats.linregress(x[mask], y[mask])
-            result.iloc[i - 1] = [
-                intercept * self.periods_per_year,
-                slope,
-                r_value ** 2,
-            ]
+            slope, *_ = stats.linregress(x[mask], y[mask])
+            result.iloc[i - 1] = float(slope)
 
         return result
 
@@ -106,142 +111,206 @@ class RiskAnalytics:
     # Multi-factor regression
     # ------------------------------------------------------------------
 
-    def factor_regression(
+    def factor_exposure(
         self,
-        factors: pd.DataFrame,
-        add_constant: bool = True,
-    ) -> Dict[str, float]:
+        strategy_returns: pd.Series,
+        factor_returns: pd.DataFrame,
+    ) -> dict:
         """
-        Regress strategy returns on multiple factor return series.
+        Multi-factor regression:
+            r_strategy = α + Σ β_k × f_k + ε
 
-        Args:
-            factors: DataFrame where each column is a factor return series
-            add_constant: include intercept (alpha)
+        Common crypto factors:
+        - Market (BTC return)
+        - Size (large cap vs small cap)
+        - Momentum (winners minus losers)
+        - Volatility (high vol vs low vol)
 
-        Returns:
-            Dict of factor_name → coefficient, plus 'alpha', 'r_squared'.
+        Returns dict with factor betas, t-stats, alpha, and R².
         """
         import statsmodels.api as sm
 
-        common_idx = self.returns.index.intersection(factors.index)
-        y = self.returns.loc[common_idx]
-        X = factors.loc[common_idx]
-
-        if add_constant:
-            X = sm.add_constant(X)
+        common = strategy_returns.index.intersection(factor_returns.index)
+        y = strategy_returns.loc[common].dropna()
+        X = factor_returns.loc[y.index]
+        X_c = sm.add_constant(X)
 
         try:
-            model = sm.OLS(y, X, missing="drop").fit()
+            model = sm.OLS(y, X_c, missing="drop").fit()
         except Exception as exc:
             logger.error("Factor regression failed: %s", exc)
             return {}
 
-        coef_dict = dict(model.params)
-        if "const" in coef_dict:
-            alpha_coef = coef_dict.pop("const")
-            coef_dict["alpha"] = alpha_coef * self.periods_per_year
-        coef_dict["r_squared"] = model.rsquared
-        coef_dict["adj_r_squared"] = model.rsquared_adj
-        return coef_dict
+        result: dict = dict(model.params)
+        result["alpha_tstat"] = float(model.tvalues.get("const", 0.0))
+        for col in factor_returns.columns:
+            result[f"{col}_tstat"] = float(model.tvalues.get(col, 0.0))
+        if "const" in result:
+            result["alpha"] = result.pop("const") * 365
+        result["r_squared"] = float(model.rsquared)
+        return result
 
     # ------------------------------------------------------------------
-    # Tail risk
+    # Drawdown analysis
     # ------------------------------------------------------------------
 
-    def tail_risk_summary(self) -> Dict[str, float]:
+    def drawdown_analysis(self, returns: pd.Series) -> pd.DataFrame:
         """
-        Summary of tail risk characteristics.
-
-        Returns dict with:
-        - max_daily_loss: worst single-period return
-        - worst_5_avg: average of worst 5 periods
-        - tail_ratio: 95th pct / 5th pct of abs(returns) (>1 = more upside tail)
-        - downside_capture (vs benchmark if provided separately)
+        Detailed drawdown analysis.
+        For each drawdown exceeding 5% depth returns a row with:
+        - start:         first date below previous peak
+        - trough:        date of maximum drawdown
+        - recovery:      date of full recovery (NaT if not recovered)
+        - max_depth:     maximum decline from peak (negative fraction)
+        - duration:      total number of periods in the drawdown episode
+        - recovery_time: periods from trough to recovery (NaN if unrecovered)
         """
-        sorted_ret = self.returns.sort_values()
-        worst_5 = sorted_ret.head(5).mean()
-        p95 = np.percentile(self.returns.abs(), 95)
-        p5 = np.percentile(self.returns.abs(), 5)
+        clean = returns.dropna()
+        if len(clean) == 0:
+            return pd.DataFrame(
+                columns=["start", "trough", "recovery",
+                         "max_depth", "duration", "recovery_time"]
+            )
 
-        return {
-            "max_daily_loss": float(sorted_ret.iloc[0]),
-            "max_daily_gain": float(sorted_ret.iloc[-1]),
-            "worst_5_avg": float(worst_5),
-            "best_5_avg": float(sorted_ret.tail(5).mean()),
-            "tail_ratio": float(p95 / p5) if p5 > 0 else float("inf"),
-        }
+        cum = (1 + clean).cumprod()
+        peak = cum.cummax()
+        dd = (cum - peak) / peak
+
+        records: List[dict] = []
+        in_dd = False
+        start_idx: Optional[int] = None
+
+        for i in range(len(dd)):
+            val = float(dd.iloc[i])
+            if not in_dd and val < 0:
+                in_dd = True
+                start_idx = i
+            elif in_dd and val == 0:
+                # Recovery reached
+                episode = dd.iloc[start_idx: i + 1]
+                depth = float(episode.min())
+                if depth <= -0.05:
+                    trough_idx = int(episode.argmin())
+                    records.append({
+                        "start":         clean.index[start_idx],
+                        "trough":        clean.index[start_idx + trough_idx],
+                        "recovery":      clean.index[i],
+                        "max_depth":     depth,
+                        "duration":      i - start_idx + 1,
+                        "recovery_time": i - (start_idx + trough_idx),
+                    })
+                in_dd = False
+
+        # Open drawdown at end of series
+        if in_dd and start_idx is not None:
+            episode = dd.iloc[start_idx:]
+            depth = float(episode.min())
+            if depth <= -0.05:
+                trough_idx = int(episode.argmin())
+                records.append({
+                    "start":         clean.index[start_idx],
+                    "trough":        clean.index[start_idx + trough_idx],
+                    "recovery":      None,
+                    "max_depth":     depth,
+                    "duration":      len(episode),
+                    "recovery_time": None,
+                })
+
+        return pd.DataFrame(
+            records,
+            columns=["start", "trough", "recovery", "max_depth", "duration", "recovery_time"],
+        )
 
     # ------------------------------------------------------------------
-    # Regime analysis
+    # Rolling Sharpe
     # ------------------------------------------------------------------
 
-    def conditional_performance(
+    def rolling_sharpe(
         self,
-        condition: pd.Series,
-        label_high: str = "high",
-        label_low: str = "low",
-    ) -> Dict[str, Dict[str, float]]:
-        """
-        Performance breakdown across two regimes defined by a boolean / binary condition.
+        returns: pd.Series,
+        window: int = 126,
+    ) -> pd.Series:
+        """Rolling annualized Sharpe ratio."""
+        clean = returns.dropna()
+        roll_mean = clean.rolling(window=window, min_periods=window // 2).mean()
+        roll_std = clean.rolling(window=window, min_periods=window // 2).std()
+        return (roll_mean / roll_std.replace(0, np.nan)) * np.sqrt(365)
 
-        Example use: condition = (btc_vol > median_vol) to split into
-        high-vol and low-vol regimes.
+    # ------------------------------------------------------------------
+    # Return attribution
+    # ------------------------------------------------------------------
+
+    def return_attribution(
+        self,
+        positions: pd.DataFrame,
+        returns: pd.DataFrame,
+    ) -> dict:
+        """
+        Attribute strategy returns to:
+        - Long book contribution
+        - Short book contribution
+        - Selection (cross-sectional picking)
+        - Timing (from rebalancing)
 
         Args:
-            condition: boolean/binary Series aligned to returns
-            label_high: label for condition == True
-            label_low: label for condition == False
+            positions: weight panel (dates × symbols)
+            returns:   forward return panel (dates × symbols)
 
         Returns:
-            Dict of regime → {mean_return, annualised_return, volatility, sharpe}
+            dict with annualised contribution estimates.
         """
-        cond = condition.reindex(self.returns.index).fillna(False).astype(bool)
+        common_idx = positions.index.intersection(returns.index)
+        common_col = positions.columns.intersection(returns.columns)
+        pos = positions.loc[common_idx, common_col]
+        ret = returns.loc[common_idx, common_col]
 
-        def _stats(rets: pd.Series) -> Dict[str, float]:
-            if len(rets) < 5:
-                return {}
-            ann_ret = float(rets.mean() * self.periods_per_year)
-            ann_vol = float(rets.std() * np.sqrt(self.periods_per_year))
-            sharpe = ann_ret / ann_vol if ann_vol > 0 else 0.0
-            return {
-                "n_periods": len(rets),
-                "annualised_return": ann_ret,
-                "annualised_volatility": ann_vol,
-                "sharpe_ratio": sharpe,
-            }
+        long_pos = pos.clip(lower=0)
+        short_pos = pos.clip(upper=0)
+        long_contrib = (long_pos * ret).sum(axis=1)
+        short_contrib = (short_pos * ret).sum(axis=1)
+        total_contrib = long_contrib + short_contrib
 
+        # Timing: contribution from position changes vs a static average position
+        avg_pos = pos.mean(axis=0)
+        static_daily = (avg_pos * ret).sum(axis=1)
+        timing_contrib = total_contrib - static_daily
+        selection_contrib = static_daily  # cross-sectional component
+
+        scale = 365
         return {
-            label_high: _stats(self.returns[cond]),
-            label_low: _stats(self.returns[~cond]),
+            "long_contribution":       float(long_contrib.mean() * scale),
+            "short_contribution":      float(short_contrib.mean() * scale),
+            "total_contribution":      float(total_contrib.mean() * scale),
+            "selection_contribution":  float(selection_contrib.mean() * scale),
+            "timing_contribution":     float(timing_contrib.mean() * scale),
         }
 
-    def rolling_sharpe(self, window: int = 63) -> pd.Series:
-        """Rolling annualised Sharpe ratio."""
-        roll_mean = self.returns.rolling(window=window, min_periods=window // 2).mean()
-        roll_std = self.returns.rolling(window=window, min_periods=window // 2).std()
-        return (roll_mean / roll_std.replace(0, np.nan)) * np.sqrt(self.periods_per_year)
-
     # ------------------------------------------------------------------
-    # Correlation and diversification
+    # Legacy helpers (kept for reporting.py compatibility)
     # ------------------------------------------------------------------
 
-    def strategy_correlation(
-        self, other_returns: Dict[str, pd.Series]
-    ) -> pd.Series:
-        """
-        Pairwise correlation of this strategy with other strategies.
-
-        Args:
-            other_returns: dict of strategy_name → returns Series
-
-        Returns:
-            Series of correlations indexed by strategy name.
-        """
-        corrs = {}
-        for name, rets in other_returns.items():
-            aligned = pd.concat([self.returns, rets], axis=1).dropna()
-            if len(aligned) < 10:
-                corrs[name] = np.nan
-            else:
-                corrs[name] = float(aligned.iloc[:, 0].corr(aligned.iloc[:, 1]))
-        return pd.Series(corrs)
+    def rolling_alpha_beta(
+        self,
+        benchmark_returns: pd.Series,
+        window: int = 63,
+        strategy_returns: Optional[pd.Series] = None,
+    ) -> pd.DataFrame:
+        """Rolling alpha, beta, and R² (legacy interface)."""
+        if strategy_returns is None:
+            raise ValueError("strategy_returns required")
+        clean_s = strategy_returns.dropna()
+        bench = benchmark_returns.reindex(clean_s.index).fillna(0)
+        result = pd.DataFrame(
+            np.nan,
+            index=clean_s.index,
+            columns=["alpha", "beta", "r_squared"],
+        )
+        for i in range(window, len(clean_s) + 1):
+            y = clean_s.iloc[i - window: i].values
+            x = bench.iloc[i - window: i].values
+            mask = ~(np.isnan(x) | np.isnan(y))
+            if mask.sum() < window // 2:
+                continue
+            slope, intercept, r_value, _, _ = stats.linregress(x[mask], y[mask])
+            result.iloc[i - 1] = [intercept * 365, slope, r_value ** 2]
+        return result
