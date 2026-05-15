@@ -41,3 +41,5 @@ htmlcov/
 .env
 *.env
 secrets.yaml
+notebooks/data/
+experiments/results/

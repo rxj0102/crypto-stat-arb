@@ -19,18 +19,23 @@ universe:
 
 signals:
   momentum:
-    lookback_days: [21, 63, 126, 252]
-    skip_days: 5
+    lookbacks: [7, 14, 21, 42, 63, 126]   # days to test
+    skip_days: [0, 1, 2, 3]               # skip parameter variants
+    default_lookback: 63
+    default_skip: 1
   reversal:
-    lookback_days: [1, 5, 10]
+    lookbacks: [1, 2, 3, 5, 7]
+    default_lookback: 5
   pairs:
     cointegration_lookback: 252
     zscore_window: 21
     entry_threshold: 1.5
     exit_threshold: 0.5
+    min_pvalue: 0.05
   activity:
     volume_window: 21
     high_volume_threshold: 1.5
+    min_ratio: 0.5
 
 backtest:
   rebalance_freq: daily           # daily | weekly | monthly
@@ -44,19 +49,27 @@ backtest:
 
 execution:
   order_type: market              # market | limit
-  # market: 20 bps round-trip, limit: 7 bps round-trip
+  market_order_cost: 0.0020       # 20 bps round-trip
+  limit_order_cost: 0.0007        # 7 bps round-trip
   market_impact_bps_per_pct_adv: 5.0
   slippage_vol_multiplier: 0.1
 
 evaluation:
-  periods_per_year: 252
+  periods_per_year: 365           # crypto trades 24/7
   benchmark: "BTC/USDT"
   risk_free_rate: 0.0
 
 combination:
-  method: equal                   # equal | ic_weighted | sharpe_weighted | min_corr | mean_variance
+  method: equal                   # equal | inverse_vol | sharpe | min_variance
   estimation_window: 63
 
+synthetic:
+  n_assets: 20
+  n_days: 1000
+  start_date: "2021-01-01"
+  seed: 42
+
 output:
-  plots_dir: output/plots
-  reports_dir: output/reports
+  results_dir: experiments/results
+  plots_dir: experiments/results/plots
+  reports_dir: experiments/results/reports
