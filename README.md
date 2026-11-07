@@ -1,5 +1,7 @@
 # crypto-stat-arb
 
+[![CI](https://github.com/rxj0102/crypto-stat-arb/actions/workflows/ci.yml/badge.svg)](https://github.com/rxj0102/crypto-stat-arb/actions/workflows/ci.yml)
+
 A research-grade statistical arbitrage platform for cryptocurrencies —
 cross-sectional momentum and reversal strategies, backtested on a universe of
 liquid crypto assets with realistic execution costs.
