@@ -17,10 +17,14 @@ The platform implements a complete quantitative research pipeline:
 5. **Performance evaluation** — Sharpe, Sortino, Calmar, alpha/beta, factor exposure, drawdown episodes
 6. **Interactive notebooks** — 7 self-contained Jupyter notebooks covering the full research cycle
 
-**Core thesis**: Crypto markets exhibit exploitable momentum at medium horizons (3–6 months) and
-mean-reversion at short horizons (1–5 days), especially when conditioned on trading activity.
-Dollar-neutral long-short portfolios targeting 50+ liquid assets can deliver Sharpe ratios of 1–2
-net of realistic transaction costs.
+**Hypothesis under test**: crypto markets may show momentum at medium horizons (3-6 months) and
+mean-reversion at short horizons (1-5 days), especially when conditioned on trading activity.
+This repo is the framework for testing that with dollar-neutral long-short portfolios.
+
+> **No performance results are claimed here.** The bundled experiments run on synthetic data
+> (`--synthetic`), so any Sharpe they produce reflects the generator, not the market. Run
+> `experiments/run_data_fetch.py` against a live exchange for real evidence. Execution is lagged
+> (`signal_lag=1` on top of next-period returns), which is conservative, not look-ahead.
 
 ---
 
