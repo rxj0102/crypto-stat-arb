@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from experiments._utils import (
     backtest_signals, load_data, print_summary_table, run_bt,
-    save_fig, save_results,
+    save_fig, save_results, select_on_train,
 )
 from statarb.backtest.execution import ExecutionModel
 from statarb.backtest.weighting import StrategyWeighting
@@ -105,9 +105,12 @@ def main(args: argparse.Namespace) -> None:
         except Exception as exc:
             logger.warning("Combination method %s failed: %s", method, exc)
 
-    # Also add individual best for comparison
-    best_individual = individual_results["sharpe"].idxmax()
-    combined_returns[f"best_individual ({best_individual})"] = strategy_returns[best_individual]
+    # Best individual signal for comparison, chosen on the first 60% of
+    # dates only (see select_on_train), not on the full-sample Sharpe.
+    best_individual, selection = select_on_train(strategy_returns, periods_per_year)
+    save_results(selection, str(out_dir / "individual_selection_holdout.csv"))
+    print_summary_table(selection, f"Individual selection (chosen before {selection.attrs['split_date']})")
+    combined_returns[f"best_individual_on_train ({best_individual})"] = strategy_returns[best_individual]
 
     # ------------------------------------------------------------------ #
     # 4. Evaluate combined strategies                                      #

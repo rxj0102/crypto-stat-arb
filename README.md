@@ -25,6 +25,8 @@ This repo is the framework for testing that with dollar-neutral long-short portf
 > (`--synthetic`), so any Sharpe they produce reflects the generator, not the market. Run
 > `experiments/run_data_fetch.py` against a live exchange for real evidence. Execution is lagged
 > (`signal_lag=1` on top of next-period returns), which is conservative, not look-ahead.
+>
+> **Variant selection is out of sample.** When an experiment picks a best signal variant, it is chosen on the first 60% of dates only and its Sharpe is reported on both parts (`experiments/_utils.py::select_on_train`, results in `*_selection_holdout.csv`). Ranking by full-sample Sharpe would let the test period pick the winner.
 
 ---
 
