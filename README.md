@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/rxj0102/crypto-stat-arb/actions/workflows/ci.yml/badge.svg)](https://github.com/rxj0102/crypto-stat-arb/actions/workflows/ci.yml)
 
-A research-grade statistical arbitrage platform for cryptocurrencies —
+A research-grade statistical arbitrage platform for cryptocurrencies -
 cross-sectional momentum and reversal strategies, backtested on a universe of
 liquid crypto assets with realistic execution costs.
 
@@ -10,12 +10,12 @@ liquid crypto assets with realistic execution costs.
 
 The platform implements a complete quantitative research pipeline:
 
-1. **Data acquisition** — fetch daily OHLCV from Binance (or any ccxt exchange); synthetic fallback for offline use
-2. **Signal generation** — momentum (7 variants), reversal (8 variants), pairs, seasonality, activity-gated signals
-3. **Backtesting** — dollar-neutral `UnconstrainedBacktest` with realistic costs (market/limit orders)
-4. **Strategy combination** — equal weight, inverse vol, Sharpe-weighted, and min-variance blending
-5. **Performance evaluation** — Sharpe, Sortino, Calmar, alpha/beta, factor exposure, drawdown episodes
-6. **Interactive notebooks** — 7 self-contained Jupyter notebooks covering the full research cycle
+1. **Data acquisition** - fetch daily OHLCV from Binance (or any ccxt exchange); synthetic fallback for offline use
+2. **Signal generation** - momentum (7 variants), reversal (8 variants), pairs, seasonality, activity-gated signals
+3. **Backtesting** - dollar-neutral `UnconstrainedBacktest` with realistic costs (market/limit orders)
+4. **Strategy combination** - equal weight, inverse vol, Sharpe-weighted, and min-variance blending
+5. **Performance evaluation** - Sharpe, Sortino, Calmar, alpha/beta, factor exposure, drawdown episodes
+6. **Interactive notebooks** - 7 self-contained Jupyter notebooks covering the full research cycle
 
 **Hypothesis under test**: crypto markets may show momentum at medium horizons (3-6 months) and
 mean-reversion at short horizons (1-5 days), especially when conditioned on trading activity.
@@ -244,15 +244,15 @@ synthetic:
 
 ## Research References
 
-- Jegadeesh & Titman (1993) — Cross-sectional momentum in equities
-- Moskowitz, Ooi & Pedersen (2012) — Time-series momentum
-- De Bondt & Thaler (1985) — Long-run reversal
-- Amihud (2002) — Illiquidity ratio
-- Liu, Tsyvinski & Wu (2022) — Three-factor model for crypto markets
-- Grobys & Sapkota (2019) — Momentum effects in crypto markets
+- Jegadeesh & Titman (1993) - Cross-sectional momentum in equities
+- Moskowitz, Ooi & Pedersen (2012) - Time-series momentum
+- De Bondt & Thaler (1985) - Long-run reversal
+- Amihud (2002) - Illiquidity ratio
+- Liu, Tsyvinski & Wu (2022) - Three-factor model for crypto markets
+- Grobys & Sapkota (2019) - Momentum effects in crypto markets
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
