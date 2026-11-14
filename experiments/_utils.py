@@ -5,6 +5,8 @@ Provides:
   - load_data():  load prices + volume, falling back to synthetic generation
   - run_bt():     run UnconstrainedBacktest for a signal, return (returns, result_dict)
   - backtest_signals(): batch backtest, return summary DataFrame
+  - select_on_train(): pick the best of several return streams on the first
+                       part of the sample and report it on the rest
   - save_results():  save DataFrame to CSV in the results dir
   - save_fig():      save matplotlib figure to PNG
   - signal_decay_ic(): compute IC at each forward horizon for signal decay plot
@@ -133,6 +135,43 @@ def backtest_signals(
                     _pm.max_drawdown(net_rets) * 100,
                     float(turnover.mean()) * 100)
     return pd.DataFrame(rows).T
+
+
+def select_on_train(
+    strategy_returns: Dict[str, pd.Series],
+    periods_per_year: int = 365,
+    train_frac: float = 0.6,
+) -> Tuple[str, pd.DataFrame]:
+    """
+    Choose the best strategy on the first ``train_frac`` of dates only.
+
+    Ranking variants by full-sample Sharpe and then reporting that same
+    Sharpe overstates what a researcher would have earned, because the
+    test period helped pick the winner. Here the split date is set on the
+    union of dates, the winner is the highest Sharpe before it, and the
+    returned table shows every strategy's Sharpe before and after it, so
+    the selected strategy can be judged on data it was not chosen on.
+
+    Returns:
+        (selected_name, table) where table has columns
+        train_sharpe, test_sharpe, selected and the split date as attrs.
+    """
+    if not strategy_returns:
+        raise ValueError("no strategies to select from")
+    idx = sorted(set().union(*[r.dropna().index for r in strategy_returns.values()]))
+    split = idx[int(len(idx) * train_frac)]
+    rows = {}
+    for name, r in strategy_returns.items():
+        r = r.dropna()
+        rows[name] = {
+            "train_sharpe": _pm.sharpe_ratio(r[r.index < split], periods_per_year=periods_per_year),
+            "test_sharpe": _pm.sharpe_ratio(r[r.index >= split], periods_per_year=periods_per_year),
+        }
+    table = pd.DataFrame(rows).T
+    selected = table["train_sharpe"].idxmax()
+    table["selected"] = table.index == selected
+    table.attrs["split_date"] = str(pd.Timestamp(split).date())
+    return selected, table
 
 
 def save_results(df: pd.DataFrame, path: str) -> None:
