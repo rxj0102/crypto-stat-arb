@@ -18,7 +18,7 @@ data/
 └── README.md                           # this file
 ```
 
-The `raw/` and `processed/` subdirectories are **gitignored** — data files
+The `raw/` and `processed/` subdirectories are **gitignored**: data files
 must be fetched locally and are not committed to the repository.
 
 ## Data Source
@@ -85,7 +85,7 @@ Dollar volume = `close × volume`.
 - **Gaps**: Some altcoins have listing gaps or zero-volume periods.
   The `TradableUniverse` class handles these via minimum-history filters.
 - **Delisted assets**: Symbols that were delisted from Binance will
-  return empty DataFrames — this is expected and handled gracefully.
+  return empty DataFrames: this is expected and handled gracefully.
 - **Stablecoins**: Filtered out by `TradableUniverse` by default.
 - **Outliers**: Extreme returns (e.g. exchange hacks, flash crashes) are
   kept in the data. Winsorisation can be applied at the signal level.

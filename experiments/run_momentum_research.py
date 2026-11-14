@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from experiments._utils import (
     backtest_signals, load_data, plot_signal_decay, print_summary_table,
-    run_bt, save_fig, save_results, signal_decay_ic,
+    run_bt, save_fig, save_results, select_on_train, signal_decay_ic,
 )
 from statarb.backtest.execution import ExecutionModel
 from statarb.data.features import FeatureEngine
@@ -143,7 +143,13 @@ def main(args: argparse.Namespace) -> None:
     em_limit = ExecutionModel(limit_order_cost=0.0007, order_type="limit")
     em_zero = ExecutionModel(market_order_cost=0.0, limit_order_cost=0.0, order_type="market")
 
-    best_sig_name = variant_results["sharpe"].idxmax()
+    # Pick the variant on the first 60% of dates only, then show how it did
+    # on the remaining 40%. Ranking by full-sample Sharpe would let the test
+    # period choose the winner.
+    variant_returns = {n: run_bt(s, returns, em)[0] for n, s in variant_signals.items()}
+    best_sig_name, selection = select_on_train(variant_returns, periods_per_year)
+    save_results(selection, str(out_dir / "variant_selection_holdout.csv"))
+    print_summary_table(selection, f"Variant selection (chosen before {selection.attrs['split_date']})")
     best_sig = variant_signals[best_sig_name]
 
     cost_rows = {}
