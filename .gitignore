@@ -13,7 +13,7 @@ build/
 venv/
 env/
 
-# Data (raw and processed — large binary files)
+# Downloaded archive files
 data/raw/
 data/processed/
 

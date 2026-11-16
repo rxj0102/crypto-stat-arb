@@ -1,0 +1,505 @@
+{
+  "data": {
+    "first_day": "2017-08-17",
+    "last_day": "2026-10-31",
+    "n_assets": 589,
+    "n_stopped_trading": 200,
+    "n_reused_symbols": 9,
+    "n_ever_in_universe": 406,
+    "n_ever_in_universe_stopped": 106,
+    "last_listing": "2026-05-31"
+  },
+  "sample": {
+    "first_trade": "2019-07-20",
+    "last_trade": "2026-10-24",
+    "weeks": 380,
+    "years": 7.28268,
+    "top_n": 50,
+    "hold_days": 7,
+    "lag_days": 1,
+    "cost_bps": 10.0,
+    "quantile": 0.2,
+    "universe_min": 42,
+    "universe_mean": 49.9132,
+    "names_per_leg": 10
+  },
+  "benchmarks": {
+    "universe": {
+      "ann_return": 0.180884,
+      "ann_vol": 0.852826,
+      "sharpe": 0.2121,
+      "t": 0.547802,
+      "max_drawdown": -0.97788,
+      "weeks": 380
+    },
+    "btc": {
+      "ann_return": 0.452789,
+      "ann_vol": 0.596444,
+      "sharpe": 0.759147,
+      "t": 1.92734,
+      "max_drawdown": -0.744353,
+      "weeks": 380
+    },
+    "universe_survivors_only": {
+      "ann_return": 0.269002,
+      "ann_vol": 0.863274,
+      "sharpe": 0.311606,
+      "t": 0.794898,
+      "max_drawdown": -0.972759,
+      "weeks": 380
+    },
+    "universe_survivors_minus_all": {
+      "ann_diff": 0.0881173,
+      "t": 2.53836
+    }
+  },
+  "signals": {
+    "1 week": {
+      "gross": {
+        "ann_return": 0.148647,
+        "ann_vol": 0.569877,
+        "sharpe": 0.26084,
+        "t": 0.68874,
+        "max_drawdown": -0.917055,
+        "weeks": 380
+      },
+      "net": {
+        "ann_return": -0.0149004,
+        "ann_vol": 0.569969,
+        "sharpe": -0.0261425,
+        "t": -0.0688547,
+        "max_drawdown": -0.953645,
+        "weeks": 380
+      },
+      "long_leg": {
+        "ann_return": -0.0875108,
+        "ann_vol": 0.366017,
+        "sharpe": -0.23909,
+        "t": -0.672513,
+        "max_drawdown": -0.822157,
+        "weeks": 380
+      },
+      "short_leg": {
+        "ann_return": 0.236157,
+        "ann_vol": 0.307205,
+        "sharpe": 0.768728,
+        "t": 1.99084,
+        "max_drawdown": -0.533372,
+        "weeks": 380
+      },
+      "turnover_per_week": 3.13437,
+      "thirds": {
+        "2019-07-20 to 2021-12-11": {
+          "ann_return": 0.422322,
+          "ann_vol": 0.681568,
+          "sharpe": 0.619634,
+          "t": 0.949966,
+          "max_drawdown": -0.655919,
+          "weeks": 126
+        },
+        "2021-12-18 to 2024-05-18": {
+          "ann_return": -0.269712,
+          "ann_vol": 0.548301,
+          "sharpe": -0.491905,
+          "t": -0.781491,
+          "max_drawdown": -0.696921,
+          "weeks": 127
+        },
+        "2024-05-25 to 2026-10-24": {
+          "ann_return": 0.295485,
+          "ann_vol": 0.458412,
+          "sharpe": 0.644582,
+          "t": 0.974114,
+          "max_drawdown": -0.446545,
+          "weeks": 127
+        }
+      },
+      "same_day_gross": {
+        "ann_return": 0.468516,
+        "ann_vol": 0.581217,
+        "sharpe": 0.806095,
+        "t": 2.1169,
+        "max_drawdown": -0.785962,
+        "weeks": 380
+      },
+      "lag_cost": {
+        "ann_diff": 0.319869,
+        "t": 2.78045
+      },
+      "p": 0.490987,
+      "p_holm": 0.981973
+    },
+    "2 weeks": {
+      "gross": {
+        "ann_return": 0.505381,
+        "ann_vol": 0.60018,
+        "sharpe": 0.842049,
+        "t": 2.25669,
+        "max_drawdown": -0.798721,
+        "weeks": 380
+      },
+      "net": {
+        "ann_return": 0.384326,
+        "ann_vol": 0.600182,
+        "sharpe": 0.640348,
+        "t": 1.71173,
+        "max_drawdown": -0.856116,
+        "weeks": 380
+      },
+      "long_leg": {
+        "ann_return": 0.185018,
+        "ann_vol": 0.407696,
+        "sharpe": 0.453814,
+        "t": 1.32289,
+        "max_drawdown": -0.597626,
+        "weeks": 380
+      },
+      "short_leg": {
+        "ann_return": 0.320363,
+        "ann_vol": 0.317678,
+        "sharpe": 1.00845,
+        "t": 2.58921,
+        "max_drawdown": -0.459284,
+        "weeks": 380
+      },
+      "turnover_per_week": 2.32001,
+      "thirds": {
+        "2019-07-20 to 2021-12-11": {
+          "ann_return": 1.06488,
+          "ann_vol": 0.700048,
+          "sharpe": 1.52116,
+          "t": 2.38379,
+          "max_drawdown": -0.325586,
+          "weeks": 126
+        },
+        "2021-12-18 to 2024-05-18": {
+          "ann_return": -0.108513,
+          "ann_vol": 0.557961,
+          "sharpe": -0.194482,
+          "t": -0.332226,
+          "max_drawdown": -0.731641,
+          "weeks": 127
+        },
+        "2024-05-25 to 2026-10-24": {
+          "ann_return": 0.564179,
+          "ann_vol": 0.522172,
+          "sharpe": 1.08045,
+          "t": 1.66029,
+          "max_drawdown": -0.47375,
+          "weeks": 127
+        }
+      },
+      "same_day_gross": {
+        "ann_return": 0.596385,
+        "ann_vol": 0.605197,
+        "sharpe": 0.985439,
+        "t": 2.6309,
+        "max_drawdown": -0.708088,
+        "weeks": 380
+      },
+      "lag_cost": {
+        "ann_diff": 0.0910044,
+        "t": 0.998653
+      },
+      "p": 0.0240272,
+      "p_holm": 0.120136
+    },
+    "4 weeks": {
+      "gross": {
+        "ann_return": 0.226368,
+        "ann_vol": 0.612883,
+        "sharpe": 0.36935,
+        "t": 1.19614,
+        "max_drawdown": -0.782913,
+        "weeks": 380
+      },
+      "net": {
+        "ann_return": 0.134493,
+        "ann_vol": 0.61261,
+        "sharpe": 0.219541,
+        "t": 0.709609,
+        "max_drawdown": -0.859018,
+        "weeks": 380
+      },
+      "long_leg": {
+        "ann_return": -0.057795,
+        "ann_vol": 0.408861,
+        "sharpe": -0.141356,
+        "t": -0.459845,
+        "max_drawdown": -0.853641,
+        "weeks": 380
+      },
+      "short_leg": {
+        "ann_return": 0.284163,
+        "ann_vol": 0.304505,
+        "sharpe": 0.933197,
+        "t": 2.66638,
+        "max_drawdown": -0.556791,
+        "weeks": 380
+      },
+      "turnover_per_week": 1.76079,
+      "thirds": {
+        "2019-07-20 to 2021-12-11": {
+          "ann_return": 0.929777,
+          "ann_vol": 0.753299,
+          "sharpe": 1.23427,
+          "t": 2.45093,
+          "max_drawdown": -0.346086,
+          "weeks": 126
+        },
+        "2021-12-18 to 2024-05-18": {
+          "ann_return": -0.235924,
+          "ann_vol": 0.520505,
+          "sharpe": -0.453261,
+          "t": -0.964357,
+          "max_drawdown": -0.736646,
+          "weeks": 127
+        },
+        "2024-05-25 to 2026-10-24": {
+          "ann_return": -0.00920865,
+          "ann_vol": 0.530371,
+          "sharpe": -0.0173626,
+          "t": -0.0311091,
+          "max_drawdown": -0.671731,
+          "weeks": 127
+        }
+      },
+      "same_day_gross": {
+        "ann_return": 0.241578,
+        "ann_vol": 0.636455,
+        "sharpe": 0.379569,
+        "t": 1.17712,
+        "max_drawdown": -0.82615,
+        "weeks": 380
+      },
+      "lag_cost": {
+        "ann_diff": 0.0152101,
+        "t": 0.15938
+      },
+      "p": 0.231644,
+      "p_holm": 0.754147
+    },
+    "12 weeks": {
+      "gross": {
+        "ann_return": -0.25942,
+        "ann_vol": 0.684889,
+        "sharpe": -0.378777,
+        "t": -1.31492,
+        "max_drawdown": -0.984745,
+        "weeks": 380
+      },
+      "net": {
+        "ann_return": -0.317604,
+        "ann_vol": 0.684839,
+        "sharpe": -0.463765,
+        "t": -1.60818,
+        "max_drawdown": -0.989468,
+        "weeks": 380
+      },
+      "long_leg": {
+        "ann_return": -0.166902,
+        "ann_vol": 0.432627,
+        "sharpe": -0.385788,
+        "t": -1.19983,
+        "max_drawdown": -0.92244,
+        "weeks": 380
+      },
+      "short_leg": {
+        "ann_return": -0.092518,
+        "ann_vol": 0.355129,
+        "sharpe": -0.26052,
+        "t": -0.925825,
+        "max_drawdown": -0.704997,
+        "weeks": 380
+      },
+      "turnover_per_week": 1.1151,
+      "thirds": {
+        "2019-07-20 to 2021-12-11": {
+          "ann_return": 0.0322633,
+          "ann_vol": 0.925868,
+          "sharpe": 0.0348466,
+          "t": 0.0708513,
+          "max_drawdown": -0.852838,
+          "weeks": 126
+        },
+        "2021-12-18 to 2024-05-18": {
+          "ann_return": -0.308499,
+          "ann_vol": 0.541302,
+          "sharpe": -0.569919,
+          "t": -1.47767,
+          "max_drawdown": -0.780989,
+          "weeks": 127
+        },
+        "2024-05-25 to 2026-10-24": {
+          "ann_return": -0.499729,
+          "ann_vol": 0.514502,
+          "sharpe": -0.971285,
+          "t": -1.60341,
+          "max_drawdown": -0.813759,
+          "weeks": 127
+        }
+      },
+      "same_day_gross": {
+        "ann_return": -0.334356,
+        "ann_vol": 0.6427,
+        "sharpe": -0.520236,
+        "t": -1.62378,
+        "max_drawdown": -0.989243,
+        "weeks": 380
+      },
+      "lag_cost": {
+        "ann_diff": -0.0749358,
+        "t": -0.895758
+      },
+      "p": 0.188537,
+      "p_holm": 0.754147
+    },
+    "26 weeks": {
+      "gross": {
+        "ann_return": -0.039102,
+        "ann_vol": 0.657538,
+        "sharpe": -0.0594672,
+        "t": -0.193474,
+        "max_drawdown": -0.908665,
+        "weeks": 380
+      },
+      "net": {
+        "ann_return": -0.0837165,
+        "ann_vol": 0.657336,
+        "sharpe": -0.127357,
+        "t": -0.414068,
+        "max_drawdown": -0.930849,
+        "weeks": 380
+      },
+      "long_leg": {
+        "ann_return": 0.0551232,
+        "ann_vol": 0.435666,
+        "sharpe": 0.126526,
+        "t": 0.370172,
+        "max_drawdown": -0.624103,
+        "weeks": 380
+      },
+      "short_leg": {
+        "ann_return": -0.0942251,
+        "ann_vol": 0.353232,
+        "sharpe": -0.266752,
+        "t": -0.786774,
+        "max_drawdown": -0.816565,
+        "weeks": 380
+      },
+      "turnover_per_week": 0.855036,
+      "thirds": {
+        "2019-07-20 to 2021-12-11": {
+          "ann_return": 0.457651,
+          "ann_vol": 0.82877,
+          "sharpe": 0.552206,
+          "t": 1.16357,
+          "max_drawdown": -0.542579,
+          "weeks": 126
+        },
+        "2021-12-18 to 2024-05-18": {
+          "ann_return": -0.0883457,
+          "ann_vol": 0.594985,
+          "sharpe": -0.148484,
+          "t": -0.288794,
+          "max_drawdown": -0.649803,
+          "weeks": 127
+        },
+        "2024-05-25 to 2026-10-24": {
+          "ann_return": -0.4827,
+          "ann_vol": 0.506468,
+          "sharpe": -0.953072,
+          "t": -1.52762,
+          "max_drawdown": -0.78867,
+          "weeks": 127
+        }
+      },
+      "same_day_gross": {
+        "ann_return": 0.00321275,
+        "ann_vol": 0.589136,
+        "sharpe": 0.00545331,
+        "t": 0.0162746,
+        "max_drawdown": -0.859537,
+        "weeks": 380
+      },
+      "lag_cost": {
+        "ann_diff": 0.0423147,
+        "t": 0.542115
+      },
+      "p": 0.846588,
+      "p_holm": 0.981973
+    }
+  },
+  "survivors_only": {
+    "1 week": {
+      "gross": {
+        "ann_return": 0.121365,
+        "ann_vol": 0.613158,
+        "sharpe": 0.197934,
+        "t": 0.521067,
+        "max_drawdown": -0.922293,
+        "weeks": 380
+      },
+      "minus_all": {
+        "ann_diff": -0.0272816,
+        "t": -0.21685
+      }
+    },
+    "2 weeks": {
+      "gross": {
+        "ann_return": 0.295798,
+        "ann_vol": 0.645783,
+        "sharpe": 0.458046,
+        "t": 1.22235,
+        "max_drawdown": -0.903437,
+        "weeks": 380
+      },
+      "minus_all": {
+        "ann_diff": -0.209583,
+        "t": -1.44844
+      }
+    },
+    "4 weeks": {
+      "gross": {
+        "ann_return": 0.218907,
+        "ann_vol": 0.67674,
+        "sharpe": 0.323473,
+        "t": 1.0389,
+        "max_drawdown": -0.795141,
+        "weeks": 380
+      },
+      "minus_all": {
+        "ann_diff": -0.00746164,
+        "t": -0.0585359
+      }
+    },
+    "12 weeks": {
+      "gross": {
+        "ann_return": -0.37769,
+        "ann_vol": 0.754594,
+        "sharpe": -0.50052,
+        "t": -1.76925,
+        "max_drawdown": -0.99429,
+        "weeks": 380
+      },
+      "minus_all": {
+        "ann_diff": -0.118269,
+        "t": -0.99829
+      }
+    },
+    "26 weeks": {
+      "gross": {
+        "ann_return": -0.205026,
+        "ann_vol": 0.703891,
+        "sharpe": -0.291275,
+        "t": -0.955377,
+        "max_drawdown": -0.97128,
+        "weeks": 374
+      },
+      "minus_all": {
+        "ann_diff": -0.162638,
+        "t": -1.35125
+      }
+    }
+  }
+}
